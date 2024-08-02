@@ -2,3 +2,4 @@ Flask==2.2.2
 Flask-Limiter==3.8.0
 openai==1.35.13
 pinecone-client==5.0.0
+gunicorn==22.0.0
