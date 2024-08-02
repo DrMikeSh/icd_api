@@ -39,7 +39,7 @@ def require_auth(f):
     def decorated(*args, **kwargs):
         log_request(request)
         token = request.headers.get('Authorization')
-        if token != ACCESS_TOKEN:
+        if token.split('Bearer ')[1] != ACCESS_TOKEN:
             return jsonify({'error': 'Unauthorized'}), 401
         return f(*args, **kwargs)
     return decorated
