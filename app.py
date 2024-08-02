@@ -19,27 +19,19 @@ limiter = Limiter(
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 PICONE_API_KEY = os.getenv('PICONE_API_KEY')
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')  
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-
-def log_request(req):
-    logger.info(f"Request Method: {req.method}")
-    logger.info(f"Request Headers: {req.headers}")
-    logger.info(f"Request Body: {req.data}")
-    logger.info(f"Request Args: {req.args}")
-
-
-# Simple token-based authentication
+# Bearer token-based authentication
 def require_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        log_request(request)
-        token = request.headers.get('Authorization')
-        if token.split('Bearer ')[1] != ACCESS_TOKEN:
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Unauthorized'}), 401
+        token = auth_header.split(" ")[1]
+        if token != os.getenv('ACCESS_TOKEN'):
             return jsonify({'error': 'Unauthorized'}), 401
         return f(*args, **kwargs)
     return decorated
@@ -63,7 +55,7 @@ def get_results():
         client = OpenAI()
         # Call OpenAI API with timeout
         text = text.replace("\n", " ")
-        openai_response = client.embeddings.create(input = [text], model="text-embedding-3-large", dimensions=1024).data[0].embedding
+        openai_response = client.embeddings.create(input=[text], model="text-embedding-3-large", dimensions=1024).data[0].embedding
     except Exception as e:
         return jsonify({'error': f'Error calling OpenAI API: {str(e)}'}), 500
     
@@ -71,9 +63,10 @@ def get_results():
         # Call Picone API with timeout
         pc = Pinecone(api_key=PICONE_API_KEY)
         index = pc.Index("icd-index")
-        picone_response= index.query(
-        vector=openai_response,
-        top_k=10)     
+        picone_response = index.query(
+            vector=openai_response,
+            top_k=10
+        )     
 
         # Check if the response is valid
         if not picone_response:
@@ -87,7 +80,7 @@ def get_results():
     ids = ''
     for result in results:
         ids += result.id + ', '
-    ids  = ids[:-2]
+    ids = ids[:-2]
     return jsonify({'ids': ids})
 
 if __name__ == '__main__':
