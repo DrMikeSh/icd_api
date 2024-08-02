@@ -1,16 +1,12 @@
 from flask import Flask, request, jsonify
 import requests
 import os
-from dotenv import load_dotenv
 from functools import wraps
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import logging
 from openai import OpenAI
 from pinecone import Pinecone
-
-
-load_dotenv()
 
 app = Flask(__name__)
 
