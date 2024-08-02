@@ -23,11 +23,21 @@ ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def log_request(req):
+    logger.info(f"Request Method: {req.method}")
+    logger.info(f"Request Headers: {req.headers}")
+    logger.info(f"Request Body: {req.data}")
+    logger.info(f"Request Args: {req.args}")
+
 
 # Simple token-based authentication
 def require_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        log_request(request)
         token = request.headers.get('Authorization')
         if token != ACCESS_TOKEN:
             return jsonify({'error': 'Unauthorized'}), 401
