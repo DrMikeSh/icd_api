@@ -8,33 +8,25 @@ import logging
 from openai import OpenAI
 from pinecone import Pinecone
 
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+PICONE_API_KEY = os.getenv('PICONE_API_KEY')
+
 app = Flask(__name__)
 
 # Setup rate limiter
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=["50 per hour"]
 )
-
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-PICONE_API_KEY = os.getenv('PICONE_API_KEY')
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-def log_request(req):
-    logger.info(f"Request Method: {req.method}")
-    logger.info(f"Request Headers: {req.headers}")
-    logger.info(f"Request Body: {req.data}")
-    logger.info(f"Request Args: {req.args}")
 
 # Bearer token-based authentication
 def require_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        log_request(request)
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):
             return jsonify({'error': 'Unauthorized'}), 401
